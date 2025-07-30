@@ -6,7 +6,10 @@ const csv = require('csv-parser');
 const inputFile = 'WaveUrls.csv'; // CSV exported from Excel
 const outputFile = 'contentMap.js'; // Output file
 const contentMap = {};
-let rowCount = 0;
+
+// Counters
+let attemptedCount = 0;
+let mappedCount = 0;
 
 // Paths
 const csvPath = path.join(__dirname, inputFile);
@@ -28,25 +31,19 @@ if (fs.existsSync(outputPath)) {
 fs.createReadStream(csvPath)
   .pipe(csv())
   .on('data', (row) => {
-    rowCount++;
-
     // Normalize and flatten headers
     const headers = Object.keys(row).reduce((acc, key) => {
       acc[key.trim().toLowerCase()] = row[key].trim();
       return acc;
     }, {});
 
-    // Check required columns exist
-    const requiredHeaders = ['wave', 'opus2'];
-    const missing = requiredHeaders.filter(h => !(h in headers));
-    if (missing.length > 0) {
-      console.error(`❌ Missing required column(s): ${missing.join(', ')}`);
-      console.error(`📝 Check that your CSV header row includes: Wave, Opus2`);
-      process.exit(1);
-    }
-
     const localPathRaw = headers['opus2'];
     const sourcePageRaw = headers['wave'];
+
+    // Skip completely blank rows
+    if (!localPathRaw && !sourcePageRaw) return;
+
+    attemptedCount++;
 
     // Warn if either value is missing
     if (!localPathRaw || !sourcePageRaw) {
@@ -64,11 +61,10 @@ fs.createReadStream(csvPath)
     }
 
     contentMap[localPath] = { sourcePage };
+    mappedCount++;
   })
   .on('end', () => {
-    const mappedCount = Object.keys(contentMap).length;
-
-    if (rowCount === 0 || mappedCount === 0) {
+    if (attemptedCount === 0 || mappedCount === 0) {
       console.warn(`⚠️  No valid rows found in ${inputFile}.`);
       console.warn(`🔎 Make sure the file has content and correct headers.`);
       return;
@@ -81,5 +77,5 @@ fs.createReadStream(csvPath)
 
     fs.writeFileSync(outputPath, output);
     console.log(`✅ ${outputFile} has been generated from ${inputFile}`);
-    console.log(`📊 ${mappedCount} out of ${rowCount} URLs were mapped successfully.`);
+    console.log(`📊 ${mappedCount} out of ${attemptedCount} URLs were mapped successfully.`);
   });

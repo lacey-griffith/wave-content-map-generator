@@ -21,6 +21,8 @@ It must contain:
 
 ## 🚀 How to Use
 1. Drop the CSV file into the root of this repo. (⚠️ Be sure the file is named WaveUrls.csv ⚠️)
+Use the terminal to move it from downloads - mv ~/Downloads/WaveUrls.csv .   
+
 2. Run the generator:
 npm run gen
 OR npm run generator
