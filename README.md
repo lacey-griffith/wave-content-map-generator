@@ -1,11 +1,10 @@
 # Wave ContentMap Generator
 
-This Node.js script generates a `contentMap.js` object used in Convert deployments by importing a client-provided CSV.
+This Node.js script generates a `contentMap.js` object used for a Convert deployment. The contentMap can be created by importing a client-provided CSV using the following formatting criteria.
 
 ---
 
 ## 📥 Input Format
-
 Export the Excel file as a **CSV (Comma-Separated Values)** file named: WaveUrls.csv
 
 
