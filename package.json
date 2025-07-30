@@ -4,7 +4,9 @@
   "description": "This Node.js script generates a `contentMap.js` object used in Convert deployments by importing a client-provided CSV.",
   "main": "generateContentMap.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "gen": "node generateContentMap.js",
+    "generate": "node generateContentMap.js"
   },
   "repository": {
     "type": "git",

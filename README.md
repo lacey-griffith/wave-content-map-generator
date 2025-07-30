@@ -22,6 +22,6 @@ It must contain:
 ## 🚀 How to Use
 1. Drop the CSV file into the root of this repo.
 2. Run the generator:
-
-```bash
-node generateContentMap.js
+npm run gen
+OR npm run generator
+OR node generateContentMap.js
