@@ -1,81 +1,90 @@
-const fs = require('fs');
-const path = require('path');
-const csv = require('csv-parser');
+const fs = require("fs");
+const path = require("path");
+const csv = require("csv-parser");
 
-// Config
-const inputFile = 'WaveUrls.csv'; // CSV exported from Excel
-const outputFile = 'contentMap.js'; // Output file
 const contentMap = {};
+const inputFile = "WaveUrls.csv"; // Wave = source of new links, Opus = where to insert them
+const outputFile = "contentMap.js";
 
-// Counters
-let attemptedCount = 0;
-let mappedCount = 0;
+let totalRows = 0;
+let successCount = 0;
+let skippedCount = 0;
+let consecutiveEmptyRows = 0;
 
-// Paths
-const csvPath = path.join(__dirname, inputFile);
-const outputPath = path.join(__dirname, outputFile);
+// Normalize a value into a clean pathname like "/toledo/"
+const normalizePath = (value) => {
+  if (!value || typeof value !== "string" || value.trim() === "") return "";
 
-// ✅ Check for missing CSV
-if (!fs.existsSync(csvPath)) {
-  console.error(`❌ Missing input file: ${inputFile}`);
-  console.error(`➡️  Make sure it's in the repo root and named exactly '${inputFile}'`);
-  process.exit(1);
-}
+  try {
+    const url = new URL(value);
+    return cleanPath(url.pathname);
+  } catch {
+    return cleanPath(value);
+  }
+};
 
-// ⚠️ Warn if contentMap.js already exists
-if (fs.existsSync(outputPath)) {
-  console.warn(`⚠️  ${outputFile} already exists and will be overwritten.`);
-}
+// Ensure a path starts and ends with a slash, and strip ?query/#hash
+const cleanPath = (input) => {
+  if (!input) return "";
+  const pathOnly = input.trim().split("?")[0].split("#")[0];
+  const withStart = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
+  return withStart.replace(/\/?$/, "/");
+};
 
-// 📥 Read and process CSV
-fs.createReadStream(csvPath)
-  .pipe(csv())
-  .on('data', (row) => {
-    // Normalize and flatten headers
-    const headers = Object.keys(row).reduce((acc, key) => {
-      acc[key.trim().toLowerCase()] = row[key].trim();
-      return acc;
-    }, {});
+// 👇 Save the stream instance so we can destroy it manually
+const stream = fs.createReadStream(path.join(__dirname, inputFile)).pipe(csv());
 
-    const localPathRaw = headers['opus2'];
-    const sourcePageRaw = headers['wave'];
+stream.on("data", (row) => {
+  totalRows++;
 
-    // Skip completely blank rows
-    if (!localPathRaw && !sourcePageRaw) return;
+  const waveKey = Object.keys(row).find(k => k.toLowerCase().includes("wave"));
+  const opusKey = Object.keys(row).find(k => k.toLowerCase().includes("opus"));
 
-    attemptedCount++;
+  const waveRaw = waveKey ? row[waveKey].trim() : "";
+  const opusRaw = opusKey ? row[opusKey].trim() : "";
 
-    // Warn if either value is missing
-    if (!localPathRaw || !sourcePageRaw) {
-      console.warn(`⚠️  Skipping row with missing values:`, row);
+  const wavePath = normalizePath(waveRaw);
+  const opusPath = normalizePath(opusRaw);
+
+  const isEmpty = !waveRaw && !opusRaw;
+
+  if (isEmpty) {
+    consecutiveEmptyRows++;
+    if (consecutiveEmptyRows >= 1) {
+      console.warn(`🛑 Stopping: encountered empty row at row ${totalRows}`);
+      stream.destroy(); // ✅ Use the actual stream instance
       return;
     }
+  } else {
+    consecutiveEmptyRows = 0; // reset if non-empty
+  }
 
-    // Normalize paths (ensure trailing slash)
-    const localPath = localPathRaw.replace(/\/$/, '') + '/';
-    const sourcePage = sourcePageRaw.replace(/\/$/, '') + '/';
+  // console.log(`🟡 Row ${totalRows}:`);
+  // console.log(`- Opus Raw:  "${opusRaw}"`);
+  // console.log(`- Wave Raw:  "${waveRaw}"`);
+  // console.log(`- Opus Path: "${opusPath}"`);
+  // console.log(`- Wave Path: "${wavePath}"`);
 
-    // Warn on duplicate keys
-    if (contentMap[localPath]) {
-      console.warn(`⚠️  Duplicate local path detected: '${localPath}' – overwriting previous entry.`);
-    }
+  if (!opusPath || !wavePath) {
+    console.warn(`⚠️ Skipped row ${totalRows} (missing or invalid):`, row);
+    skippedCount++;
+    return;
+  }
 
-    contentMap[localPath] = { sourcePage };
-    mappedCount++;
-  })
-  .on('end', () => {
-    if (attemptedCount === 0 || mappedCount === 0) {
-      console.warn(`⚠️  No valid rows found in ${inputFile}.`);
-      console.warn(`🔎 Make sure the file has content and correct headers.`);
-      return;
-    }
+  contentMap[opusPath] = { sourcePage: wavePath };
+  successCount++;
+});
 
-    const output =
-      'const contentMap = ' +
-      JSON.stringify(contentMap, null, 2) +
-      ';\n\nexport default contentMap;\n';
+stream.on("end", () => {
+  const output =
+    "const contentMap = " +
+    JSON.stringify(contentMap, null, 2) +
+    ";\n\nexport default contentMap;\n";
 
-    fs.writeFileSync(outputPath, output);
-    console.log(`✅ ${outputFile} has been generated from ${inputFile}`);
-    console.log(`📊 ${mappedCount} out of ${attemptedCount} URLs were mapped successfully.`);
-  });
+  fs.writeFileSync(path.join(__dirname, outputFile), output);
+
+  console.log(`\n✅ contentMap.js generated successfully.`);
+  console.log(`📦 Rows processed: ${totalRows}`);
+  console.log(`✔️  Entries added:  ${successCount}`);
+  console.log(`❌ Rows skipped:   ${skippedCount}`);
+});
