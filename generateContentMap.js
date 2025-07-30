@@ -66,7 +66,9 @@ fs.createReadStream(csvPath)
     contentMap[localPath] = { sourcePage };
   })
   .on('end', () => {
-    if (rowCount === 0 || Object.keys(contentMap).length === 0) {
+    const mappedCount = Object.keys(contentMap).length;
+
+    if (rowCount === 0 || mappedCount === 0) {
       console.warn(`⚠️  No valid rows found in ${inputFile}.`);
       console.warn(`🔎 Make sure the file has content and correct headers.`);
       return;
@@ -79,4 +81,5 @@ fs.createReadStream(csvPath)
 
     fs.writeFileSync(outputPath, output);
     console.log(`✅ ${outputFile} has been generated from ${inputFile}`);
+    console.log(`📊 ${mappedCount} out of ${rowCount} URLs were mapped successfully.`);
   });
