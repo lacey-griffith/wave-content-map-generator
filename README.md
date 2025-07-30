@@ -11,17 +11,16 @@ Export the Excel file as a **CSV (Comma-Separated Values)** file named: WaveUrls
 
 It must contain:
 
-| Column Name | Example                            | Description                          |
-|-------------|------------------------------------|--------------------------------------|
-| `Opus 2`    | `/lexington/`                      | Local homepage URL (target page)     |
-| `Wave Page` | `/locations/kentucky/lexington/`   | Source WAVE page (used to fetch content) |
+| Column Name | Example                            | Description                              |
+|-------------|------------------------------------|------------------------------------------|
+| `Opus2`     | `/lexington/`                      | Local homepage URL (target page)         |
+| `Wave`      | `/locations/kentucky/lexington/`   | Source WAVE page (used to fetch content) |
 
 > ⚠️ Be sure the CSV uses a **comma `,` as the delimiter** — not a tab or semicolon.
 
 ---
 
 ## 🚀 How to Use
-
 1. Drop the CSV file into the root of this repo.
 2. Run the generator:
 
