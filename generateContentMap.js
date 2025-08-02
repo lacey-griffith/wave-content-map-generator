@@ -6,14 +6,30 @@ const contentMap = {};
 const inputFile = "WaveUrls.csv"; // Wave = source of new links, Opus = where to insert them
 const outputFile = "contentMap.js";
 
+/* = = = Configs = = = */
+const MAX_ROWS_TO_PROCESS = 400;
+
+/* = = = Trackers = = = */
 let totalRows = 0;
 let successCount = 0;
 let skippedCount = 0;
-let consecutiveEmptyRows = 0;
 
 // Normalize a value into a clean pathname like "/toledo/"
 const normalizePath = (value) => {
-  if (!value || typeof value !== "string" || value.trim() === "") return "";
+  if (
+    !value ||
+    typeof value !== "string" ||
+    value.trim() === "" ||
+    value.includes(" ")
+  ) {
+    return "";
+  }
+
+    let input = value.trim();
+  // Add https:// if it looks like a domain or URL without protocol
+  if (!input.startsWith("http") && input.includes(".")) {
+    input = "https://" + input;
+  }
 
   try {
     const url = new URL(value);
@@ -23,15 +39,16 @@ const normalizePath = (value) => {
   }
 };
 
+
 // Ensure a path starts and ends with a slash, and strip ?query/#hash
 const cleanPath = (input) => {
   if (!input) return "";
   const pathOnly = input.trim().split("?")[0].split("#")[0];
   const withStart = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
-  return withStart.replace(/\/?$/, "/");
+  const cleaned = withStart.replace(/\/{2,}/g, "/"); // collapse slashes
+  return decodeURIComponent(cleaned.toLowerCase().replace(/\/?$/, "/"));
 };
 
-// 👇 Save the stream instance so we can destroy it manually
 const stream = fs.createReadStream(path.join(__dirname, inputFile)).pipe(csv());
 
 stream.on("data", (row) => {
@@ -46,27 +63,24 @@ stream.on("data", (row) => {
   const wavePath = normalizePath(waveRaw);
   const opusPath = normalizePath(opusRaw);
 
-  const isEmpty = !waveRaw && !opusRaw;
+if (totalRows > MAX_ROWS_TO_PROCESS) {
+  console.warn(`🛑 Stopping: reached row limit of ${MAX_ROWS_TO_PROCESS}`);
+  stream.destroy();
+  return;
+}
 
-  if (isEmpty) {
-    consecutiveEmptyRows++;
-    if (consecutiveEmptyRows >= 1) {
-      console.warn(`🛑 Stopping: encountered empty row at row ${totalRows}`);
-      stream.destroy(); // ✅ Use the actual stream instance
-      return;
-    }
-  } else {
-    consecutiveEmptyRows = 0; // reset if non-empty
-  }
+if (!waveRaw || !opusRaw) {
+  console.warn(`⚠️ Skipped empty row ${totalRows}`);
+  skippedCount++;
+  return;
+}
 
   // console.log(`🟡 Row ${totalRows}:`);
-  // console.log(`- Opus Raw:  "${opusRaw}"`);
-  // console.log(`- Wave Raw:  "${waveRaw}"`);
   // console.log(`- Opus Path: "${opusPath}"`);
   // console.log(`- Wave Path: "${wavePath}"`);
 
   if (!opusPath || !wavePath) {
-    console.warn(`⚠️ Skipped row ${totalRows} (missing or invalid):`, row);
+    console.warn(`⚠️ Skipped invalid row ${totalRows}:`, row);
     skippedCount++;
     return;
   }
