@@ -94,10 +94,11 @@ stream.on("end", () => {
     "const contentMap = " +
     JSON.stringify(contentMap, null, 2) +
     ";\n\nexport default contentMap;\n";
-
+  
   fs.writeFileSync(path.join(__dirname, outputFile), output);
 
-  console.log(`\n✅ contentMap.js generated successfully.`);
+
+  console.log(`\n✅ contentMap.js generated successfully with ${Object.keys(contentMap).length} entries.`);
   console.log(`📦 Rows processed: ${totalRows}`);
   console.log(`✔️  Entries added:  ${successCount}`);
   console.log(`❌ Rows skipped:   ${skippedCount}`);
