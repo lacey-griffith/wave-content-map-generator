@@ -13,8 +13,7 @@ Built to reduce manual work, prevent formatting errors, and make it easy to scal
 WaveUrls.csv
 ```
 
-> ⚠️ File name **must be exactly** `WaveUrls.csv`.  
-> Common trip-up: Excel or Google Sheets may download the file as `WaveUrls(Sheet1).csv` — rename it before using!
+> ⚠️ CSV File must be present in the root directory before Content Map will generate!
 
 ---
 
@@ -39,7 +38,6 @@ Wave,Opus
 ## How to Use
 
 1. **Drop the CSV file into the root of this repo.**
-   - ⚠️ It must be named `WaveUrls.csv`.
    - From terminal, move it from your Downloads folder:
 
 ```bash
@@ -67,7 +65,7 @@ node generateContentMap.js
 - ✅ Adds trailing slashes if missing
 - ⚠️ Warns and skips rows with missing values
 - ⚠️ Warns if `contentMap.js` already exists (then overwrites it)
-- ⚠️ Warns on duplicate `Opus2` keys
+- ⚠️ Warns on duplicate `Opus` keys
 - 📊 Displays a summary of how many URLs were successfully mapped
 
 ---
