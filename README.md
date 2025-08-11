@@ -28,7 +28,7 @@ Wave,Opus
 | Column | Column Name | Example                          | Description                              |
 |--------|-------------|----------------------------------|------------------------------------------|
 | A      | `Wave`      | `/locations/kentucky/lexington/` | Source WAVE page (used to fetch content) |
-| B      | `Opus`     | `/lexington/`                     | Local homepage URL (target page)         |
+| B      | `Opus`      | `/lexington/`                     | Local homepage URL (target page)         |
 
 > ⚠️ Be sure your CSV uses a **comma `,` as the delimiter** — not a tab or semicolon.  
 > You can open it in VS Code or a text editor to verify.
