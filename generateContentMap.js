@@ -122,8 +122,7 @@ stream.on("end", () => {
 
   const output =
     "const contentMap = " +
-    JSON.stringify(contentMap, null, 2) +
-    ";\n\nexport default contentMap;\n";
+    JSON.stringify(contentMap, null, 2)
 
   fs.writeFileSync(path.join(__dirname, outputFile), output);
 
